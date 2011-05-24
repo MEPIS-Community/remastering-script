@@ -3,7 +3,7 @@
 # -------------------------------------------------------------------------------------- #
 # Script:    remaster.sh                                                                 #
 # Details:   remasters MEPIS 8.5 and possible other Live CDs created with SquashFS       #
-# Requirements: squashfs-tools, squashfs-modules, aufs, mkisofs                          #
+# Requirements: squashfs-tools, squashfs-modules                                         #
 #                                                                                        #
 # This program is distributed in the hope that it will be useful, but WITHOUT            #
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS          #
@@ -74,32 +74,6 @@ function install_squashfs-modules {
 			echo -e "Error building \"squshfs-module\". Script aborted.\n"
 			exit 2
 		}
-	}
-}
-
-function check_aufs {
-	lsmod | grep -q aufs || modprobe aufs || {
-		echo -e "This script requires AUFS. Script aborted.\n"
-		exit 2
-	}
-}
-
-function check_mkisofs {
-	dpkg -s mkisofs | grep -q "ok installed" || {
-		echo -n "This script needs to use mkisofs, can I install it"
-		Y_or_n || {
-			echo -e "mksiofs is a required package. Script aborted.\n"
-			exit 2
-		}
-		install_mkisofs
-	}
-}
-
-function install_mkisofs {
-	apt-get update
-	apt-get install mkisofs || {
-		echo -e "Error installing required package. Script aborted.\n"
-		exit 2
 	}
 }
 
@@ -442,7 +416,7 @@ function make_squashfs {
 # makes iso named $1
 function make_iso {
 	cd $STARTPATH
-	mkisofs -l -J -pad -no-emul-boot -boot-load-size 4 -boot-info-table -b boot/isolinux/isolinux.bin -c boot/isolinux/isolinux.cat -o $1 $REM/newiso
+	genisoimage -l -J -pad -no-emul-boot -boot-load-size 4 -boot-info-table -b boot/isolinux/isolinux.bin -c boot/isolinux/isolinux.cat -o $1 $REM/newiso
 	if [[ $? -eq 0 ]]; then
 		echo
 		echo "Done. You will find your very own remastered home-made Linux here: $1"
@@ -605,10 +579,8 @@ done
 # Exits to help if not understood:
 $ERROR && help
 
-# This checks for script requirements (squashfs, aufs, mkisofs)
+# This checks for script requirements
 check_squashfs-tools
-check_aufs
-check_mkisofs
 
 # Execute this section if script called with --from-hdd or -d
 $HD && {
